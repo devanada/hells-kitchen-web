@@ -1,22 +1,22 @@
 import withReactContent from "sweetalert2-react-content";
+import { useNavigate, Link } from "react-router-dom";
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-import Swal from "utils/Swal";
-import CustomButton from "components/CustomButton";
-import CustomInput from "components/CustomInput";
-import Layout from "components/Layout";
+import CustomButton from "@components/CustomButton";
+import CustomInput from "@components/CustomInput";
+import Layout from "@components/Layout";
+import Swal from "@utils/Swal";
 
 function Register() {
-  const MySwal = withReactContent(Swal);
-  const navigate = useNavigate();
   const [disabled, setDisabled] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
   const [firstName, setFirstName] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
+  const MySwal = withReactContent(Swal);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (email && password && firstName && lastName) {
@@ -39,17 +39,20 @@ function Register() {
       .post("register", body)
       .then((res) => {
         const { message, data } = res.data;
-        MySwal.fire({
-          title: "Success",
-          text: message,
-          showCancelButton: false,
-        });
         if (data) {
-          navigate("/login");
+          MySwal.fire({
+            title: "Success",
+            text: message,
+            showCancelButton: false,
+          }).then((result) => {
+            if (result.isConfirmed) {
+              navigate("/login");
+            }
+          });
         }
       })
-      .catch((err) => {
-        const { message } = err.response.data;
+      .catch((error) => {
+        const { message } = error.response.data;
         MySwal.fire({
           title: "Failed",
           text: message,
@@ -89,10 +92,16 @@ function Register() {
             placeholder="Password"
             onChange={(e) => setPassword(e.target.value)}
           />
+          <p className="text-black dark:text-white">
+            Already have an account? Login{" "}
+            <Link id="to-login" to="/login" className="text-blue-500">
+              here!
+            </Link>
+          </p>
           <CustomButton
             id="btn-register"
             label="Register"
-            loading={loading || disabled}
+            disabled={loading || disabled}
           />
         </form>
       </div>

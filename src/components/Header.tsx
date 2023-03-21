@@ -6,21 +6,25 @@ import {
   FaSignOutAlt,
   FaChevronDown,
 } from "react-icons/fa";
+import withReactContent from "sweetalert2-react-content";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, Transition } from "@headlessui/react";
 import { Fragment, useContext } from "react";
 import { useDispatch } from "react-redux";
 import { useCookies } from "react-cookie";
 
-import { handleAuth } from "utils/redux/reducers/reducer";
-import { ThemeContext } from "utils/context";
+import { handleAuth } from "@utils/redux/reducers/reducer";
+import { ThemeContext } from "@utils/context";
+import Swal from "@utils/Swal";
 
 const Header = () => {
-  const [cookie, , removeCookie] = useCookies(["token"]);
+  const [cookie, , removeCookie] = useCookies(["token", "uname"]);
+  const { theme, setTheme } = useContext(ThemeContext);
+  const MySwal = withReactContent(Swal);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { theme, setTheme } = useContext(ThemeContext);
   const checkToken = cookie.token;
+  const getUname = cookie.uname;
 
   const handleTheme = (mode: string) => {
     setTheme(mode);
@@ -28,10 +32,18 @@ const Header = () => {
   };
 
   const handleLogout = async () => {
-    removeCookie("token");
-    dispatch(handleAuth(false));
-    navigate("/login");
-    alert("You have been logged out");
+    MySwal.fire({
+      title: "Success",
+      text: "You have been logged out",
+      showCancelButton: false,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        removeCookie("token");
+        removeCookie("uname");
+        dispatch(handleAuth(false));
+        navigate("/login");
+      }
+    });
   };
 
   return (
@@ -69,8 +81,7 @@ const Header = () => {
                           : "text-gray-900 dark:text-white"
                       } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       id="to-profile"
-                      onClick={() => navigate("/profile")}
-                      // TODO: Change the url based on username /u/:username
+                      onClick={() => navigate(`/u/${getUname}`)}
                     >
                       {active ? (
                         <FaUserCircle

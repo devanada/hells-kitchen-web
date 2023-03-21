@@ -1,38 +1,51 @@
+import withReactContent from "sweetalert2-react-content";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-import Layout from "components/Layout";
-import UserType from "utils/types/user";
+import Layout from "@components/Layout";
+import Card from "@components/Card";
+import UserType from "@utils/types/user";
+import Swal from "@utils/Swal";
 
 function Home() {
   const [datas, setDatas] = useState<UserType[]>([]);
+  const MySwal = withReactContent(Swal);
 
   useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = () => {
     axios
-      .get("https://hells-kitchen.onrender.com/api/v1/users")
+      .get("users")
       .then((response) => {
         const { data } = response.data;
         setDatas(data);
       })
       .catch((error) => {
-        console.log(error);
+        const { data } = error.response;
+        MySwal.fire({
+          title: "Failed",
+          text: data.message,
+          showCancelButton: false,
+        });
       });
-  }, []);
+  };
 
   return (
     <Layout>
-      <div className="grid grid-cols-6">
-        {datas.map((data) => (
-          <div key={data.id} className="flex flex-col text-white items-center">
-            <img
-              src={data.image}
-              alt={`${data.username} picture`}
-              className="w-28 aspect-square"
+      <div className="grid gap-3 grid-cols-6">
+        {datas.map((data) => {
+          const fullName = `${data.first_name} ${data.last_name}`;
+          return (
+            <Card
+              key={data.id}
+              image={data.image}
+              name={fullName}
+              username={data.username}
             />
-            <h1>{data.first_name}</h1>
-            <p>{data.username}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Layout>
   );

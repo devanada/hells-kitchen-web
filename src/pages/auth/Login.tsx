@@ -5,21 +5,21 @@ import { useDispatch } from "react-redux";
 import { useCookies } from "react-cookie";
 import axios from "axios";
 
-import Swal from "utils/Swal";
-import { handleAuth } from "utils/redux/reducers/reducer";
-import CustomButton from "components/CustomButton";
-import CustomInput from "components/CustomInput";
-import Layout from "components/Layout";
+import CustomButton from "@components/CustomButton";
+import CustomInput from "@components/CustomInput";
+import Layout from "@components/Layout";
+import { handleAuth } from "@utils/redux/reducers/reducer";
+import Swal from "@utils/Swal";
 
 function Login() {
-  const [, setCookie] = useCookies(["token"]);
-  const MySwal = withReactContent(Swal);
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
   const [disabled, setDisabled] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
   const [password, setPassword] = useState<string>("");
   const [username, setUsername] = useState<string>("");
+  const MySwal = withReactContent(Swal);
+  const [, setCookie] = useCookies(["token", "uname"]);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (username && password) {
@@ -37,21 +37,24 @@ function Login() {
       password,
     };
     axios
-      .post("https://hells-kitchen.onrender.com/api/v1/login", body)
+      .post("login", body)
       .then((res) => {
         const { data, message } = res.data;
-        setCookie("token", data.token, { path: "/" });
-        dispatch(handleAuth(true));
-        // TODO: Save username
         MySwal.fire({
           title: "Success",
           text: message,
           showCancelButton: false,
+        }).then((result) => {
+          if (result.isConfirmed) {
+            setCookie("token", data.token, { path: "/" });
+            setCookie("uname", data.username, { path: "/" });
+            dispatch(handleAuth(true));
+            navigate("/");
+          }
         });
-        navigate("/");
       })
-      .catch((err) => {
-        const { data } = err.response;
+      .catch((error) => {
+        const { data } = error.response;
         MySwal.fire({
           title: "Failed",
           text: data.message,
@@ -81,14 +84,14 @@ function Login() {
           />
           <p className="text-black dark:text-white">
             Don't have an account? Register{" "}
-            <Link id="to-register" to="/register">
+            <Link id="to-register" to="/register" className="text-blue-500">
               here!
             </Link>
           </p>
           <CustomButton
             id="btn-login"
             label="Login"
-            loading={loading || disabled}
+            disabled={loading || disabled}
           />
         </form>
       </div>

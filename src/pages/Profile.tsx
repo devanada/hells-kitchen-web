@@ -1,44 +1,49 @@
 import withReactContent from "sweetalert2-react-content";
+import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useCookies } from "react-cookie";
 import axios from "axios";
 
-import Swal from "utils/Swal";
-import CustomButton from "components/CustomButton";
-import CustomInput from "components/CustomInput";
-import Layout from "components/Layout";
-import UserType from "utils/types/user";
+import CustomButton from "@components/CustomButton";
+import CustomInput from "@components/CustomInput";
+import Layout from "@components/Layout";
+import UserType from "@utils/types/user";
+import Swal from "@utils/Swal";
 
 function Profile() {
-  const MySwal = withReactContent(Swal);
-  const [loading, setLoading] = useState<boolean>(true);
   const [objSubmit, setObjSubmit] = useState<Partial<UserType>>({});
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
   const [image, setImage] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
+  const [uname, setUname] = useState<string>("");
+  const [cookie] = useCookies(["uname"]);
+  const MySwal = withReactContent(Swal);
+  const { username } = useParams();
+  const checkOwner = cookie.uname;
 
   useEffect(() => {
     fetchData();
+    console.log(checkOwner);
   }, []);
 
   const fetchData = async () => {
     axios
-      .get("profile")
+      .get(`users/${username}`)
       .then((res) => {
-        const { email, first_name, last_name, image } = res.data.data;
-        setEmail(email);
+        const { username, first_name, last_name, image } = res.data.data;
+        setUname(username);
         setFirstName(first_name);
         setLastName(last_name);
         setImage(image);
       })
       .catch((err) => {
-        console.log(err);
-        // const { data } = err.response;
-        // MySwal.fire({
-        //   title: "Failed",
-        //   text: data.message,
-        //   showCancelButton: false,
-        // });
+        const { data } = err.response;
+        MySwal.fire({
+          title: "Failed",
+          text: data.message,
+          showCancelButton: false,
+        });
       })
       .finally(() => setLoading(false));
   };
@@ -101,12 +106,14 @@ function Profile() {
               setImage(URL.createObjectURL(e.currentTarget.files[0]));
               handleChange(e.currentTarget.files[0], "image");
             }}
+            disabled={checkOwner !== uname}
           />
           <CustomInput
             id="input-username"
             placeholder="Username"
-            value={email}
+            value={uname}
             onChange={(e) => handleChange(e.target.value, "username")}
+            disabled={checkOwner !== uname}
           />
           <CustomInput
             id="input-first-name"
@@ -114,6 +121,7 @@ function Profile() {
             placeholder="First Name"
             value={firstName}
             onChange={(e) => handleChange(e.target.value, "first_name")}
+            disabled={checkOwner !== uname}
           />
           <CustomInput
             id="input-last-name"
@@ -121,8 +129,11 @@ function Profile() {
             placeholder="Last Name"
             value={lastName}
             onChange={(e) => handleChange(e.target.value, "last_name")}
+            disabled={checkOwner !== uname}
           />
-          <CustomButton id="btn-submit" label="Submit" loading={loading} />
+          {checkOwner === uname && (
+            <CustomButton id="btn-submit" label="Submit" disabled={loading} />
+          )}
         </form>
       </div>
     </Layout>
