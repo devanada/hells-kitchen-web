@@ -11,19 +11,19 @@ const Card: FC<Props> = (props) => {
   const { image, name, username } = props;
 
   return (
-    <div className="rounded-xl flex flex-col text-white p-2 gap-1 items-center">
+    <Link
+      className="rounded-xl flex flex-col text-light px-3 py-6 gap-1 items-center bg-dark/20 dark:bg-light/10 hover:bg-dark/30 hover:dark:bg-light/20 transition ease-in-out duration-300"
+      to={`/u/${username}`}
+    >
       <img
         src={image}
         alt={`${username} picture`}
         className="rounded-full w-28 aspect-square"
       />
-      <Link to={`/u/${username}`}>
-        <h1 className="font-bold text-black text-base text-center tracking-wider dark:text-white">
-          {name}
-        </h1>
-      </Link>
-      <p className="text-black text-sm dark:text-white">{username}</p>
-    </div>
+      <h1 className="font-bold text-dark text-base text-center tracking-wider dark:text-light">
+        {name}
+      </h1>
+    </Link>
   );
 };
 

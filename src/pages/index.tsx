@@ -9,6 +9,7 @@ import Swal from "@utils/Swal";
 
 function Home() {
   const [datas, setDatas] = useState<UserType[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const MySwal = withReactContent(Swal);
 
   useEffect(() => {
@@ -29,12 +30,13 @@ function Home() {
           text: data.message,
           showCancelButton: false,
         });
-      });
+      })
+      .finally(() => setIsLoading(false));
   };
 
   return (
     <Layout>
-      <div className="grid gap-3 grid-cols-6">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
         {datas.map((data) => {
           const fullName = `${data.first_name} ${data.last_name}`;
           return (

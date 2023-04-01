@@ -82,7 +82,7 @@ function Login() {
             placeholder="Password"
             onChange={(e) => setPassword(e.target.value)}
           />
-          <p className="text-black dark:text-white">
+          <p className="text-dark dark:text-light">
             Don't have an account? Register{" "}
             <Link id="to-register" to="/register" className="text-blue-500">
               here!

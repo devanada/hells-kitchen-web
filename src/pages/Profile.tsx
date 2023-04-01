@@ -24,7 +24,6 @@ function Profile() {
 
   useEffect(() => {
     fetchData();
-    console.log(checkOwner);
   }, []);
 
   const fetchData = async () => {
@@ -96,18 +95,19 @@ function Profile() {
           className="flex flex-col min-w-[40%] gap-4"
           onSubmit={(e) => handleSubmit(e)}
         >
-          <CustomInput
-            id="input-image"
-            type="file"
-            onChange={(e) => {
-              if (!e.currentTarget.files) {
-                return;
-              }
-              setImage(URL.createObjectURL(e.currentTarget.files[0]));
-              handleChange(e.currentTarget.files[0], "image");
-            }}
-            disabled={checkOwner !== uname}
-          />
+          {checkOwner === uname && (
+            <CustomInput
+              id="input-image"
+              type="file"
+              onChange={(e) => {
+                if (!e.currentTarget.files) {
+                  return;
+                }
+                setImage(URL.createObjectURL(e.currentTarget.files[0]));
+                handleChange(e.currentTarget.files[0], "image");
+              }}
+            />
+          )}
           <CustomInput
             id="input-username"
             placeholder="Username"
