@@ -1,6 +1,6 @@
+import { useParams, useNavigate } from "react-router-dom";
 import withReactContent from "sweetalert2-react-content";
-import { useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useCookies } from "react-cookie";
 import axios from "axios";
 
@@ -17,10 +17,12 @@ function Profile() {
   const [loading, setLoading] = useState<boolean>(true);
   const [image, setImage] = useState<string>("");
   const [uname, setUname] = useState<string>("");
-  const [cookie] = useCookies(["uname"]);
+  const [cookie] = useCookies(["uname", "token"]);
   const MySwal = withReactContent(Swal);
   const { username } = useParams();
+  const navigate = useNavigate();
   const checkOwner = cookie.uname;
+  const getToken = cookie.token;
 
   useEffect(() => {
     fetchData();
@@ -47,7 +49,7 @@ function Profile() {
       .finally(() => setLoading(false));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     setLoading(true);
     e.preventDefault();
     const formData = new FormData();
@@ -56,9 +58,10 @@ function Profile() {
       formData.append(key, objSubmit[key]);
     }
     axios
-      .put("profile", formData, {
+      .put("users", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${getToken}`,
         },
       })
       .then((res) => {
@@ -87,6 +90,41 @@ function Profile() {
     setObjSubmit(temp);
   };
 
+  const deleteAccount = () => {
+    MySwal.fire({
+      title: "Logout",
+      text: "Are you sure you want to delete this account?",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setLoading(true);
+        axios
+          .delete("users", {
+            headers: {
+              Authorization: `Bearer ${getToken}`,
+            },
+          })
+          .then((res) => {
+            const { message } = res.data;
+            MySwal.fire({
+              title: "Success",
+              text: message,
+              showCancelButton: false,
+            });
+            navigate("/", { replace: true });
+          })
+          .catch((err) => {
+            const { data } = err.response;
+            MySwal.fire({
+              title: "Failed",
+              text: data.message,
+              showCancelButton: false,
+            });
+          })
+          .finally(() => setLoading(false));
+      }
+    });
+  };
+
   return (
     <Layout>
       <div className="flex h-full w-full gap-4 items-center justify-center">
@@ -108,18 +146,19 @@ function Profile() {
               }}
             />
           )}
-          <CustomInput
+          {/* TODO: Need to create a condition when username already exist and not deleted */}
+          {/* <CustomInput
             id="input-username"
             placeholder="Username"
-            value={uname}
+            defaultValue={uname}
             onChange={(e) => handleChange(e.target.value, "username")}
             disabled={checkOwner !== uname}
-          />
+          /> */}
           <CustomInput
             id="input-first-name"
             type="text"
             placeholder="First Name"
-            value={firstName}
+            defaultValue={firstName}
             onChange={(e) => handleChange(e.target.value, "first_name")}
             disabled={checkOwner !== uname}
           />
@@ -127,12 +166,26 @@ function Profile() {
             id="input-last-name"
             type="text"
             placeholder="Last Name"
-            value={lastName}
+            defaultValue={lastName}
             onChange={(e) => handleChange(e.target.value, "last_name")}
             disabled={checkOwner !== uname}
           />
           {checkOwner === uname && (
-            <CustomButton id="btn-submit" label="Submit" disabled={loading} />
+            <>
+              <CustomButton
+                id="btn-submit"
+                label="Submit"
+                disabled={loading}
+                type="submit"
+              />
+              <CustomButton
+                id="btn-delete"
+                label="Delete Account"
+                disabled={loading}
+                type="button"
+                onClick={() => deleteAccount()}
+              />
+            </>
           )}
         </form>
       </div>

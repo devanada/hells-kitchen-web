@@ -33,9 +33,8 @@ const Header = () => {
 
   const handleLogout = async () => {
     MySwal.fire({
-      title: "Success",
-      text: "You have been logged out",
-      showCancelButton: false,
+      title: "Logout",
+      text: "Are you sure?",
     }).then((result) => {
       if (result.isConfirmed) {
         removeCookie("token");

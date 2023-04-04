@@ -19,7 +19,7 @@ axios.defaults.baseURL = "https://hells-kitchen.onrender.com/api/v1";
 const App = () => {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const background = useMemo(() => ({ theme, setTheme }), [theme]);
-  const [cookie] = useCookies(["token"]);
+  const [cookie] = useCookies(["token", "uname"]);
   const checkToken = cookie.token;
 
   const router = createBrowserRouter([
