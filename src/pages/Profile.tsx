@@ -1,21 +1,27 @@
 import { useParams, useNavigate } from "react-router-dom";
 import withReactContent from "sweetalert2-react-content";
-import { useState, useEffect, FormEvent } from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState, useEffect } from "react";
 import { useCookies } from "react-cookie";
 import axios from "axios";
+import * as z from "zod";
 
 import CustomButton from "@components/CustomButton";
 import CustomInput from "@components/CustomInput";
 import Layout from "@components/Layout";
-import UserType from "@utils/types/user";
 import Swal from "@utils/Swal";
 
+const schema = z.object({
+  first_name: z.string().min(1, { message: "First name is required" }),
+  last_name: z.string().min(1, { message: "Last name is required" }),
+  image: z.any(),
+});
+
+type Schema = z.infer<typeof schema>;
+
 function Profile() {
-  const [objSubmit, setObjSubmit] = useState<Partial<UserType>>({});
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
-  const [image, setImage] = useState<string>("");
   const [uname, setUname] = useState<string>("");
   const [cookie] = useCookies(["uname", "token"]);
   const MySwal = withReactContent(Swal);
@@ -28,15 +34,25 @@ function Profile() {
     fetchData();
   }, []);
 
+  const {
+    watch,
+    setValue,
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Schema>({
+    resolver: zodResolver(schema),
+  });
+
   const fetchData = async () => {
     axios
       .get(`users/${username}`)
       .then((res) => {
         const { username, first_name, last_name, image } = res.data.data;
+        setValue("first_name", first_name);
+        setValue("last_name", last_name);
+        setValue("image", image);
         setUname(username);
-        setFirstName(first_name);
-        setLastName(last_name);
-        setImage(image);
       })
       .catch((err) => {
         const { data } = err.response;
@@ -49,13 +65,13 @@ function Profile() {
       .finally(() => setLoading(false));
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit: SubmitHandler<Schema> = (data) => {
     setLoading(true);
-    e.preventDefault();
     const formData = new FormData();
-    let key: keyof typeof objSubmit;
-    for (key in objSubmit) {
-      formData.append(key, objSubmit[key]);
+    let key: keyof typeof data;
+    for (key in data) {
+      if (key === "image") formData.append(key, data[key][0]);
+      formData.append(key, data[key]);
     }
     axios
       .put("users", formData, {
@@ -71,7 +87,6 @@ function Profile() {
           text: message,
           showCancelButton: false,
         });
-        setObjSubmit({});
       })
       .catch((err) => {
         const { data } = err.response;
@@ -82,12 +97,6 @@ function Profile() {
         });
       })
       .finally(() => fetchData());
-  };
-
-  const handleChange = (value: string | File, key: keyof typeof objSubmit) => {
-    let temp = { ...objSubmit };
-    temp[key] = value;
-    setObjSubmit(temp);
   };
 
   const deleteAccount = () => {
@@ -128,22 +137,25 @@ function Profile() {
   return (
     <Layout>
       <div className="flex h-full w-full gap-4 items-center justify-center">
-        <img className="h-60 w-60" src={image} alt={image} />
+        <img
+          className="h-60 w-60"
+          src={
+            typeof watch("image") === "object"
+              ? URL.createObjectURL(watch("image")[0])
+              : watch("image")
+          }
+          alt="Profile"
+        />
         <form
           className="flex flex-col min-w-[40%] gap-4"
-          onSubmit={(e) => handleSubmit(e)}
+          onSubmit={handleSubmit(onSubmit)}
         >
           {checkOwner === uname && (
             <CustomInput
+              register={register}
+              name="image"
               id="input-image"
               type="file"
-              onChange={(e) => {
-                if (!e.currentTarget.files) {
-                  return;
-                }
-                setImage(URL.createObjectURL(e.currentTarget.files[0]));
-                handleChange(e.currentTarget.files[0], "image");
-              }}
             />
           )}
           {/* TODO: Need to create a condition when username already exist and not deleted */}
@@ -155,19 +167,21 @@ function Profile() {
             disabled={checkOwner !== uname}
           /> */}
           <CustomInput
+            register={register}
+            name="first_name"
             id="input-first-name"
             type="text"
             placeholder="First Name"
-            defaultValue={firstName}
-            onChange={(e) => handleChange(e.target.value, "first_name")}
+            error={errors.first_name?.message}
             disabled={checkOwner !== uname}
           />
           <CustomInput
+            register={register}
+            name="last_name"
             id="input-last-name"
             type="text"
             placeholder="Last Name"
-            defaultValue={lastName}
-            onChange={(e) => handleChange(e.target.value, "last_name")}
+            error={errors.last_name?.message}
             disabled={checkOwner !== uname}
           />
           {checkOwner === uname && (
